@@ -1,9 +1,6 @@
 blueprint:
   name: Low Battery Notifications
-  description: >-
-      # Low Battery Notifications\n
-      Automation for notifying a given device when a sensor battery is below the specified threshold, with support for excluding integrations, devices, and entities.
-  source_url: https://github.com/tigattack/ha-blueprints/blob/main/sensor_low_battery.yaml
+  description: "# Low Battery Notifications\n\nAutomation for notifying a given device when a sensor battery is below the specified threshold, with support for excluding integrations, devices, and entities."
   domain: automation
   input:
     notify_devices:
