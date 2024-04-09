@@ -1,0 +1,68 @@
+blueprint:
+  name: Low Battery Notifications
+  description: >-
+      # Low Battery Notifications
+      Automation for notifying a given device when a sensor battery is below the specified threshold, with support for excluding integrations, devices, and entities.
+  source_url: https://github.com/tigattack/ha-blueprints/blob/main/sensor_low_battery.yaml
+  domain: automation
+  input:
+    notify_devices:
+      name: '[REQUIRED] Notification Device'
+      description: The device to notify when a low battery alert is triggered.
+      selector:
+        device:
+          multiple: true
+          filter:
+            integration: mobile_app
+
+    exclude_devices:
+      name: '[OPTIONAL] Exclude Devices'
+      description: Devices to exclude from low battery detection.
+      default: []
+      selector:
+        device:
+          multiple: true
+          entity:
+            domain: sensor
+            device_class: battery
+
+variables:
+  exclude_devices: !input exclude_devices
+
+trigger:
+  - platform: template
+    value_template: >-
+      {% set low_battery = namespace(entities=[]) -%}
+      {% for state in states.sensor -%}
+        {% if device_attr(state.entity_id, 'id') not in exclude_devices and state_attr(state.entity_id, 'device_class') == 'battery' and states(state.entity_id) not in ['unknown', 'unavailable'] and states(state.entity_id) | int(-1) != -1 -%}
+          {% if state.state | int <= 10 -%}
+            {% set low_battery.entities = low_battery.entities + [state.name ~ ' (' ~ state.state ~ '%)'] -%}
+          {% endif -%}
+        {% endif -%}
+      {%- endfor -%}
+      {{ low_battery.entities | length > 0 }}
+
+action:
+  - alias: Set variables
+    variables:
+      sensors: >-
+        {% set low_battery = namespace(entities=[]) -%}
+        {% for state in states.sensor -%}
+          {% if device_attr(state.entity_id, 'id') not in exclude_devices and state_attr(state.entity_id, 'device_class') == 'battery' and states(state.entity_id) not in ['unknown', 'unavailable'] and states(state.entity_id) | int(-1) != -1 -%}
+            {% if state.state | int <= 10 -%}
+              {% set low_battery.entities = low_battery.entities + [state.name ~ ' (' ~ state.state ~ '%)'] -%}
+            {% endif -%}
+          {% endif -%}
+        {%- endfor -%}
+        {{ low_battery.entities | join('\n') }}
+
+  - alias: Notify
+    repeat:
+      for_each: !input notify_devices
+      sequence:
+        - alias: Notify
+          service: notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}
+          data:
+            title: Low Battery Alert
+            message: "{{ sensors }}"
+mode: single
