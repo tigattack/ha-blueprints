@@ -11,17 +11,12 @@ blueprint:
           multiple: true
           filter:
             integration: mobile_app
-
-    exclude_devices:
-      name: '[OPTIONAL] Exclude Devices'
-      description: Devices to exclude from low battery detection.
-      default: []
+    time:
+      name: '[REQUIRED] Trigger Time'
+      description: Set the time you would like the automation to check for low batteries.
+      default: '00:00:00'
       selector:
-        device:
-          multiple: true
-          entity:
-            domain: sensor
-            device_class: battery
+        time:
 
     low_battery_threshold:
       name: '[OPTIONAL] Low Battery Threshold'
@@ -35,22 +30,24 @@ blueprint:
           unit_of_measurement: '%'
           mode: slider
 
+    exclude_devices:
+      name: '[OPTIONAL] Exclude Devices'
+      description: Devices to exclude from low battery detection.
+      default: []
+      selector:
+        device:
+          multiple: true
+          entity:
+            domain: sensor
+            device_class: battery
+
 variables:
   exclude_devices: !input exclude_devices
   low_battery_threshold: !input low_battery_threshold
 
 trigger:
-  - platform: template
-    value_template: >-
-      {% set low_battery = namespace(entities=[]) -%}
-      {% for state in states.sensor -%}
-        {% if device_attr(state.entity_id, 'id') not in exclude_devices and state_attr(state.entity_id, 'device_class') == 'battery' and states(state.entity_id) not in ['unknown', 'unavailable'] and states(state.entity_id) | int(-1) != -1 -%}
-          {% if state.state | int <= low_battery_threshold -%}
-            {% set low_battery.entities = low_battery.entities + [state.name ~ ' (' ~ state.state ~ '%)'] -%}
-          {% endif -%}
-        {% endif -%}
-      {%- endfor -%}
-      {{ low_battery.entities | length > 0 }}
+  - platform: time
+    at: !input time
 
 action:
   - alias: Set variables
@@ -58,8 +55,8 @@ action:
       sensors: >-
         {% set low_battery = namespace(entities=[]) -%}
         {% for state in states.sensor -%}
-          {% if device_attr(state.entity_id, 'id') not in exclude_devices and state_attr(state.entity_id, 'device_class') == 'battery' and states(state.entity_id) not in ['unknown', 'unavailable'] and states(state.entity_id) | int(-1) != -1 -%}
-            {% if state.state | int <= low_battery_threshold -%}
+          {% if device_attr(state.entity_id, 'id') not in exclude_devices and state_attr(state.entity_id, 'device_class') == 'battery' and states(state.entity_id) not in ['unknown', 'unavailable'] and states(state.entity_id) | float(-1) != -1 -%}
+            {% if state.state | float <= low_battery_threshold -%}
               {% set low_battery.entities = low_battery.entities + [state.name ~ ' (' ~ state.state ~ '%)'] -%}
             {% endif -%}
           {% endif -%}
