@@ -3,6 +3,13 @@ blueprint:
   description: "# Low Battery Notifications\n\nAutomation for notifying a given device when a sensor battery is below the specified threshold, with support for excluding integrations, devices, and entities."
   domain: automation
   input:
+    time:
+      name: '[REQUIRED] Trigger Time'
+      description: Set the time you would like the automation to check for low batteries.
+      default: '00:00:00'
+      selector:
+        time:
+
     notify_devices:
       name: '[REQUIRED] Notification Device'
       description: The device to notify when a low battery alert is triggered.
@@ -11,12 +18,6 @@ blueprint:
           multiple: true
           filter:
             integration: mobile_app
-    time:
-      name: '[REQUIRED] Trigger Time'
-      description: Set the time you would like the automation to check for low batteries.
-      default: '00:00:00'
-      selector:
-        time:
 
     low_battery_threshold:
       name: '[OPTIONAL] Low Battery Threshold'
