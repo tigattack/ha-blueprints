@@ -1,3 +1,5 @@
+# Fixed version of https://github.com/EPMatt/awesome-ha-blueprints/blob/main/blueprints/controllers/ikea_e2001_e2002/ikea_e2001_e2002.yaml
+# Incorporates some of my own fixes with others from several PRs in EPMatt/awesome-ha-blueprints.
 blueprint:
   name: Controller - IKEA E2001/E2002 STYRBAR Remote control
   description: "# Controller - IKEA E2001/E2002 STYRBAR Remote control\n\nController
@@ -11,7 +13,7 @@ blueprint:
     for additional details.\n\n\U0001F4D5 Full documentation regarding this blueprint
     is available [here](https://epmatt.github.io/awesome-ha-blueprints/docs/blueprints/controllers/ikea_e2001_e2002).\n\n\U0001F680
     This blueprint is part of the **[Awesome HA Blueprints](https://epmatt.github.io/awesome-ha-blueprints)
-    project**.\n\nℹ️ Version 2022.08.08\n"
+    project**.\n\nℹ️ Version 2022.08.08\n\nFixed version by [tigattack](https://github.com/tigattack)."
   source_url: https://github.com/EPMatt/awesome-ha-blueprints/blob/main/blueprints/controllers/ikea_e2001_e2002/ikea_e2001_e2002.yaml
   domain: automation
   input:
