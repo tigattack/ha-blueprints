@@ -64,13 +64,18 @@ action:
         {%- endfor -%}
         {{ low_battery.entities | join('\n') }}
 
-  - alias: Notify
-    repeat:
-      for_each: !input notify_devices
-      sequence:
-        - alias: Notify
-          service: notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}
-          data:
-            title: Low Battery Alert
-            message: "{{ sensors }}"
+  - alias: Notify if there are any devices with low battery
+    if:
+      - condition: template
+        value_template: "{{ sensors | length > 0 }}"
+    then:
+      - alias: Notify
+        repeat:
+          for_each: !input notify_devices
+          sequence:
+            - alias: Notify
+              service: notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}
+              data:
+                title: Low Battery Alert
+                message: "{{ sensors }}"
 mode: single
