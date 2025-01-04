@@ -5,14 +5,14 @@ blueprint:
   input:
     time:
       name: '[REQUIRED] Trigger Time'
-      description: Set the time you would like the automation to check for low batteries.
+      description: The time you would like the automation to notify you of any low batteries.
       default: '00:00:00'
       selector:
         time:
 
     notify_devices:
-      name: '[REQUIRED] Notification Device'
-      description: The device to notify when a low battery alert is triggered.
+      name: '[REQUIRED] Notification Devices'
+      description: Devices to notify when a low battery alert is triggered.
       selector:
         device:
           multiple: true
@@ -21,7 +21,7 @@ blueprint:
 
     low_battery_threshold:
       name: '[OPTIONAL] Low Battery Threshold'
-      description: Sensors with batteries below this threshold will be considered low.
+      description: Sensors with battery levels below this threshold will be considered low.
       default: 10
       selector:
         number:
@@ -42,9 +42,17 @@ blueprint:
             domain: sensor
             device_class: battery
 
+    detect_battery_binary_sensors:
+      name: '[OPTIONAL] Detect Battery Binary Sensors'
+      description: Alert when binary sensors with a `device_class` of `battery` are in state `on`.
+      default: true
+      selector:
+        boolean:
+
 variables:
   exclude_devices: !input exclude_devices
   low_battery_threshold: !input low_battery_threshold
+  detect_battery_binary_sensors: !input detect_battery_binary_sensors
 
 trigger:
   - platform: time
@@ -56,13 +64,24 @@ action:
       sensors: >-
         {% set low_battery = namespace(entities=[]) -%}
         {% for state in states.sensor -%}
-          {% if device_attr(state.entity_id, 'id') not in exclude_devices and state_attr(state.entity_id, 'device_class') == 'battery' and states(state.entity_id) not in ['unknown', 'unavailable'] and states(state.entity_id) | float(-1) != -1 -%}
+          {% if device_attr(state.entity_id, 'id') not in exclude_devices
+                 and state_attr(state.entity_id, 'device_class') == 'battery'
+                 and state.state not in ['unknown', 'unavailable']
+                 and state.state | float(-1) != -1 -%}
             {% if state.state | float <= low_battery_threshold -%}
               {% set low_battery.entities = low_battery.entities + [state.name ~ ' (' ~ state.state ~ '%)'] -%}
             {% endif -%}
           {% endif -%}
         {%- endfor -%}
-        {{ low_battery.entities | join('\n') }}
+        {% if detect_battery_binary_sensors -%}
+          {% for state in states.binary_sensor -%}
+            {% if state_attr(state.entity_id, 'device_class') == 'battery'
+                  and state.state == 'on' -%}
+              {% set low_battery.entities = low_battery.entities + [state.name] -%}
+            {% endif -%}
+          {% endfor -%}
+        {% endif -%}
+        {{ low_battery.entities | sort | join('\n') }}
 
   - alias: Notify if there are any devices with low battery
     if:
